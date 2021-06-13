@@ -92,6 +92,20 @@ func makeHandler(svc Service) http.Handler {
 		opts...,
 	))
 
+	router.Path("/api/v1/payments/{account_id}").Methods(http.MethodGet).Handler(kithttp.NewServer(
+		makeGetPaymentsEndpoint(svc),
+		decodeGetPaymentsRequest,
+		encodeGetPaymentsResponse,
+		opts...,
+	))
+
+	router.Path("/api/v1/payments").Methods(http.MethodPost).Handler(kithttp.NewServer(
+		makeApplyPaymentEndpoint(svc),
+		decodeApplyPaymentRequest,
+		encodeApplyPaymentResponse,
+		opts...,
+	))
+
 	return router
 }
 
@@ -114,5 +128,16 @@ func makeGetPaymentsEndpoint(svc Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return getPaymentsResponse{payments: resp}, nil
+	}
+}
+
+func makeApplyPaymentEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(applyPaymentRequest)
+		err := svc.ApplyPayment(ctx, req.input)
+		if err != nil {
+			return nil, err
+		}
+		return applyPaymentResponse{}, nil
 	}
 }

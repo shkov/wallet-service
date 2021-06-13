@@ -1,15 +1,55 @@
 package walletservice
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/shkov/wallet-service/internal/account"
 )
+
+type applyPaymentRequest struct {
+	input *account.Payment
+}
+
+type applyPaymentResponse struct {
+}
+
+func encodeApplyPaymentRequest(ctx context.Context, r *http.Request, request interface{}) error {
+	req := request.(applyPaymentRequest)
+	r.URL.Path = "/api/v1/payments"
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(req.input); err != nil {
+		return err
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	return nil
+}
+
+func decodeApplyPaymentRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	input := &account.Payment{}
+	if err := json.NewDecoder(r.Body).Decode(input); err != nil {
+		return nil, errBadRequest("failed to decode json request: %w", err)
+	}
+	return applyPaymentRequest{input: input}, nil
+}
+
+func encodeApplyPaymentResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.WriteHeader(http.StatusNoContent)
+	return nil
+}
+
+func decodeApplyPaymentResponse(ctx context.Context, r *http.Response) (interface{}, error) {
+	if r.StatusCode < 200 || r.StatusCode > 299 {
+		return nil, decodeError(r)
+	}
+	return applyPaymentResponse{}, nil
+}
 
 type getAccountRequest struct {
 	id int64
