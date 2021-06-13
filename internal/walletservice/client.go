@@ -33,7 +33,8 @@ var _ Service = (*client)(nil)
 
 // Client is a wallet-service client.
 type client struct {
-	getAccountEndpoint endpoint.Endpoint
+	getPaymentsEndpoint endpoint.Endpoint
+	getAccountEndpoint  endpoint.Endpoint
 }
 
 // NewClient creates a new client.
@@ -62,6 +63,13 @@ func NewClient(cfg ClientConfig) (Service, error) {
 			decodeGetAccountResponse,
 			options...,
 		).Endpoint(),
+		getPaymentsEndpoint: kithttp.NewClient(
+			http.MethodGet,
+			baseURL,
+			encodeGetPaymentsRequest,
+			decodeGetPaymentsResponse,
+			options...,
+		).Endpoint(),
 	}
 
 	return c, nil
@@ -72,7 +80,11 @@ func (c *client) ApplyPayment(ctx context.Context, p *account.Payment) error {
 }
 
 func (c *client) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {
-	return nil, nil
+	response, err := c.getPaymentsEndpoint(ctx, getPaymentsRequest{accountID: accountID})
+	if err != nil {
+		return nil, err
+	}
+	return response.(getPaymentsResponse).payments, nil
 }
 
 func (c *client) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
@@ -81,5 +93,4 @@ func (c *client) GetAccount(ctx context.Context, id int64) (*account.Account, er
 		return nil, err
 	}
 	return response.(getAccountResponse).account, nil
-
 }

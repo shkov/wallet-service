@@ -99,6 +99,20 @@ func makeGetAccountEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(getAccountRequest)
 		resp, err := svc.GetAccount(ctx, req.id)
-		return getAccountResponse{account: resp}, err
+		if err != nil {
+			return nil, err
+		}
+		return getAccountResponse{account: resp}, nil
+	}
+}
+
+func makeGetPaymentsEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(getPaymentsRequest)
+		resp, err := svc.GetPayments(ctx, req.accountID)
+		if err != nil {
+			return nil, err
+		}
+		return getPaymentsResponse{payments: resp}, nil
 	}
 }
