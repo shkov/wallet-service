@@ -3,7 +3,12 @@ package walletservice
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/go-kit/kit/endpoint"
+	kithttp "github.com/go-kit/kit/transport/http"
 
 	"github.com/shkov/wallet-service/internal/account"
 )
@@ -28,6 +33,38 @@ var _ Service = (*client)(nil)
 
 // Client is a wallet-service client.
 type client struct {
+	getAccountEndpoint endpoint.Endpoint
+}
+
+// NewClient creates a new client.
+func NewClient(cfg ClientConfig) (Service, error) {
+	err := cfg.validate()
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL, err := url.Parse(cfg.ServiceURL)
+	if err != nil {
+		return nil, err
+	}
+
+	options := []kithttp.ClientOption{
+		kithttp.SetClient(&http.Client{
+			Timeout: cfg.Timeout,
+		}),
+	}
+
+	c := &client{
+		getAccountEndpoint: kithttp.NewClient(
+			http.MethodGet,
+			baseURL,
+			encodeGetAccountRequest,
+			decodeGetAccountResponse,
+			options...,
+		).Endpoint(),
+	}
+
+	return c, nil
 }
 
 func (c *client) ApplyPayment(ctx context.Context, p *account.Payment) error {
@@ -39,17 +76,10 @@ func (c *client) GetPayments(ctx context.Context, accountID int64) ([]*account.P
 }
 
 func (c *client) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
-	return nil, nil
-}
-
-// NewClient creates a new client.
-func NewClient(cfg ClientConfig) (Service, error) {
-	err := cfg.validate()
+	response, err := c.getAccountEndpoint(ctx, getAccountRequest{id: id})
 	if err != nil {
 		return nil, err
 	}
+	return response.(getAccountResponse).account, nil
 
-	c := &client{}
-
-	return c, nil
 }

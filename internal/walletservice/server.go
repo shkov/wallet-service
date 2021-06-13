@@ -7,7 +7,10 @@ import (
 	"net/http/pprof"
 	"time"
 
+	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/log"
+	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -38,6 +41,7 @@ func NewServer(cfg ServerConfig) (*Server, error) {
 	router.Handle("/metrics", promhttp.Handler())
 	router.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
 	router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	router.Handle("/api/v1/", makeHandler(svc))
 
 	srv := &http.Server{
 		Handler:      router,
@@ -71,5 +75,30 @@ func (s *Server) Serve(ctx context.Context) error {
 			return fmt.Errorf("failed to shutdown server: %w", err)
 		}
 		return nil
+	}
+}
+
+func makeHandler(svc Service) http.Handler {
+	opts := []kithttp.ServerOption{
+		kithttp.ServerErrorEncoder(encodeError),
+	}
+
+	router := mux.NewRouter()
+
+	router.Path("/api/v1/accounts/{id}").Methods(http.MethodGet).Handler(kithttp.NewServer(
+		makeGetAccountEndpoint(svc),
+		decodeGetAccountRequest,
+		encodeGetAccountResponse,
+		opts...,
+	))
+
+	return router
+}
+
+func makeGetAccountEndpoint(svc Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(getAccountRequest)
+		resp, err := svc.GetAccount(ctx, req.id)
+		return getAccountResponse{account: resp}, err
 	}
 }
