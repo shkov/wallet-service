@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS wallet (
+  id INT NOT NULL,
+  PRIMARY KEY (id)
+);

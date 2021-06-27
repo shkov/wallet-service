@@ -14,9 +14,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+type Storage interface {
+}
+
 // ServerConfig is a server configuration.
 type ServerConfig struct {
 	Logger          log.Logger
+	Storage         Storage
 	Port            string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration

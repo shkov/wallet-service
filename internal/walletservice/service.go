@@ -15,27 +15,27 @@ type Service interface {
 	GetAccount(ctx context.Context, id int64) (*account.Account, error)
 }
 
-type service struct {
+type serviceImpl struct {
 	logger log.Logger
 }
 
 func newService(logger log.Logger) Service {
-	return &service{
+	return &serviceImpl{
 		logger: logger,
 	}
 }
 
 // ApplyPayment applies the given payment to the accounts.
-func (s *service) ApplyPayment(ctx context.Context, p *account.Payment) error {
+func (s *serviceImpl) ApplyPayment(ctx context.Context, p *account.Payment) error {
 	return errInternal("ApplyPayment wasn't implemented")
 }
 
 // GetPayments returns all payments by the account id.
-func (s *service) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {
+func (s *serviceImpl) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {
 	return nil, errInternal("GetPayments wasn't implemented")
 }
 
 // GetAccount returns an account by the given id.
-func (s *service) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
+func (s *serviceImpl) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
 	return nil, errInternal("GetAccount wasn't implemented")
 }

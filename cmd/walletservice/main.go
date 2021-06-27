@@ -13,6 +13,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/shkov/wallet-service/internal/storage"
 	"github.com/shkov/wallet-service/internal/walletservice"
 )
 
@@ -23,6 +24,13 @@ type configuration struct {
 	ReadTimeout     time.Duration `envconfig:"READ_TIMEOUT" default:"1s"`
 	WriteTimeout    time.Duration `envconfig:"WRITE_TIMEOUT" default:"1s"`
 	ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"1s"`
+
+	PostgresHost           string        `envconfig:"POSTGRES_HOST" required:"true"`
+	PostgresPort           uint16        `envconfig:"POSTGRES_PORT" required:"true"`
+	PostgresDatabase       string        `envconfig:"POSTGRES_DATABASE" required:"true"`
+	PostgresUser           string        `envconfig:"POSTGRES_USER" required:"true"`
+	PostgresPassword       string        `envconfig:"POSTGRES_PASSWORD" required:"true"`
+	PostgresConnectTimeout time.Duration `envconfig:"POSTGRES_CONNECT_TIMEOUT" default:"1s"`
 }
 
 func main() {
@@ -48,8 +56,22 @@ func run(ctx context.Context, logger log.Logger) error {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
+	walletStorage, err := storage.New(storage.Config{
+		Host:           cfg.PostgresHost,
+		Port:           cfg.PostgresPort,
+		Database:       cfg.PostgresDatabase,
+		User:           cfg.PostgresUser,
+		Password:       cfg.PostgresPassword,
+		ConnectTimeout: cfg.PostgresConnectTimeout,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to initialize storage: %w", err)
+	}
+	walletStorage = storage.NewInstrumentingMiddleware(walletStorage, metricPrefix)
+
 	srv, err := walletservice.NewServer(walletservice.ServerConfig{
 		Logger:          logger,
+		Storage:         walletStorage,
 		Port:            cfg.Port,
 		ReadTimeout:     cfg.ReadTimeout,
 		WriteTimeout:    cfg.WriteTimeout,

@@ -5,17 +5,27 @@ services:
     image: postgres
     restart: always
     environment:
-      - POSTGRES_USER=test
+      - POSTGRES_USER=walletservice_user
       - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=wallet
     ports:
       - "5432:5432"
+    volumes:
+      - ../migrations/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
 
   walletservice:
     container_name: walletservice
-    environment:
-      - PORT=80
     build:
       context: ..
       dockerfile: build/Dockerfile
-    ports:
-      - "80:80"
+    restart: always
+    environment:
+      - PORT=80
+      - POSTGRES_HOST=127.0.0.1
+      - POSTGRES_PORT=5432
+      - POSTGRES_DATABASE=wallet
+      - POSTGRES_USER=walletservice_user
+      - POSTGRES_PASSWORD=secret
+    depends_on:
+      - walletservice-postgres
+    network_mode: host
