@@ -19,7 +19,7 @@ type service struct {
 	logger log.Logger
 }
 
-func newService(logger log.Logger) *service {
+func newService(logger log.Logger) Service {
 	return &service{
 		logger: logger,
 	}
@@ -27,15 +27,15 @@ func newService(logger log.Logger) *service {
 
 // ApplyPayment applies the given payment to the accounts.
 func (s *service) ApplyPayment(ctx context.Context, p *account.Payment) error {
-	return nil
+	return errInternal("ApplyPayment wasn't implemented")
 }
 
 // GetPayments returns all payments by the account id.
 func (s *service) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {
-	return nil, nil
+	return nil, errInternal("GetPayments wasn't implemented")
 }
 
 // GetAccount returns an account by the given id.
 func (s *service) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
-	return nil, nil
+	return nil, errInternal("GetAccount wasn't implemented")
 }

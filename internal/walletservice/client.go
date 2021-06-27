@@ -29,8 +29,6 @@ func (cfg ClientConfig) validate() error {
 	return nil
 }
 
-var _ Service = (*client)(nil)
-
 // Client is a wallet-service client.
 type client struct {
 	getPaymentsEndpoint  endpoint.Endpoint

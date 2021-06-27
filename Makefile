@@ -5,6 +5,20 @@ help:
 	@echo "targets:"
 	@echo "  help            show this message"
 	@echo "  test            run all tests (requires docker)"
-	@echo "  clean-docker    stop test docker containers"
+	@echo "  clean           stop docker containers"
 	@echo "  run             run wallet-service with all dependencies"
 	@echo
+
+.PHONY: test
+test:
+	@go test -race -cover ./...
+
+.PHONY: run
+run:
+	@docker-compose -f deployments/docker-compose.yml up -d --build
+	# OK
+
+.PHONY: clean
+clean:
+	@docker-compose -f deployments/docker-compose.yml down
+	# OK

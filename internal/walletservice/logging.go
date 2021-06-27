@@ -10,8 +10,6 @@ import (
 	"github.com/shkov/wallet-service/internal/account"
 )
 
-var _ Service = (*loggingMiddleware)(nil)
-
 // loggingMiddleware wraps the given Service and logs errors.
 type loggingMiddleware struct {
 	next   Service

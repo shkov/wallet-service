@@ -34,7 +34,7 @@ func encodeApplyPaymentRequest(ctx context.Context, r *http.Request, request int
 func decodeApplyPaymentRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	input := &account.Payment{}
 	if err := json.NewDecoder(r.Body).Decode(input); err != nil {
-		return nil, errBadRequest("failed to decode json request: %w", err)
+		return nil, errBadRequest("failed to decode json request: %v", err)
 	}
 	return applyPaymentRequest{input: input}, nil
 }
@@ -68,7 +68,7 @@ func encodeGetAccountRequest(ctx context.Context, r *http.Request, request inter
 func decodeGetAccountRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	id, err := strconv.ParseInt(mux.Vars(r)["id"], 10, 64)
 	if err != nil {
-		return nil, errBadRequest("failed to parse account id: %w", err)
+		return nil, errBadRequest("failed to parse account id: %v", err)
 	}
 	return getAccountRequest{id: id}, nil
 }
@@ -77,7 +77,7 @@ func encodeGetAccountResponse(ctx context.Context, w http.ResponseWriter, respon
 	resp := response.(getAccountResponse)
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp.account); err != nil {
-		return errInternal("failed to encode json response: %w", err)
+		return errInternal("failed to encode json response: %v", err)
 	}
 	return nil
 }
@@ -110,7 +110,7 @@ func encodeGetPaymentsRequest(ctx context.Context, r *http.Request, request inte
 func decodeGetPaymentsRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	accountID, err := strconv.ParseInt(mux.Vars(r)["account_id"], 10, 64)
 	if err != nil {
-		return nil, errBadRequest("failed to parse account id: %w", err)
+		return nil, errBadRequest("failed to parse account id: %v", err)
 	}
 	return getPaymentsRequest{accountID: accountID}, nil
 }
@@ -119,7 +119,7 @@ func encodeGetPaymentsResponse(ctx context.Context, w http.ResponseWriter, respo
 	resp := response.(getPaymentsResponse)
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp.payments); err != nil {
-		return errInternal("failed to encode json response: %w", err)
+		return errInternal("failed to encode json response: %v", err)
 	}
 	return nil
 }
@@ -139,7 +139,7 @@ func encodeError(ctx context.Context, err error, w http.ResponseWriter) {
 	e, ok := err.(*serviceError)
 	if !ok {
 		e = &serviceError{
-			Code:    http.StatusInternalServerError,
+			code:    http.StatusInternalServerError,
 			Message: err.Error(),
 		}
 	}

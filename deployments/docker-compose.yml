@@ -1,0 +1,21 @@
+version: '3'
+services:
+  walletservice-postgres:
+    container_name: walletservice-postgres
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=secret
+    ports:
+      - "5432:5432"
+
+  walletservice:
+    container_name: walletservice
+    environment:
+      - PORT=80
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    ports:
+      - "80:80"

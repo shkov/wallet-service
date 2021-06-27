@@ -12,8 +12,6 @@ import (
 	"github.com/shkov/wallet-service/internal/account"
 )
 
-var _ Service = (*instrumentingMiddleware)(nil)
-
 // instrumentingMiddleware wraps the given Service and records metrics.
 type instrumentingMiddleware struct {
 	next      Service
