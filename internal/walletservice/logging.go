@@ -23,11 +23,11 @@ func NewLoggingMiddleware(next Service, logger log.Logger) Service {
 	}
 }
 
-func (mw *loggingMiddleware) ApplyPayment(ctx context.Context, p *account.Payment) error {
+func (mw *loggingMiddleware) ApplyPayment(ctx context.Context, p *account.PaymentRequest) (*account.Payment, error) {
 	startedAt := time.Now()
-	err := mw.next.ApplyPayment(ctx, p)
+	out, err := mw.next.ApplyPayment(ctx, p)
 	mw.log(ctx, startedAt, "ApplyPayment", err)
-	return err
+	return out, err
 }
 
 func (mw *loggingMiddleware) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {

@@ -81,13 +81,12 @@ func NewClient(cfg ClientConfig) (Service, error) {
 	return c, nil
 }
 
-func (c *client) ApplyPayment(ctx context.Context, p *account.Payment) error {
-	_, err := c.applyPaymentEndpoint(ctx, applyPaymentRequest{input: p})
+func (c *client) ApplyPayment(ctx context.Context, p *account.PaymentRequest) (*account.Payment, error) {
+	response, err := c.applyPaymentEndpoint(ctx, applyPaymentRequest{paymentRequest: p})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
-
+	return response.(applyPaymentResponse).payment, nil
 }
 
 func (c *client) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {

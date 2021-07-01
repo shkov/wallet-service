@@ -1,3 +1,6 @@
 package account
 
-type Account struct{}
+type Account struct {
+	ID      int64
+	Balance string
+}

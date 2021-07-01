@@ -32,11 +32,11 @@ func NewInstrumentingMiddleware(next Service, prefix string) Service {
 	}
 }
 
-func (mw *instrumentingMiddleware) ApplyPayment(ctx context.Context, p *account.Payment) error {
+func (mw *instrumentingMiddleware) ApplyPayment(ctx context.Context, p *account.PaymentRequest) (*account.Payment, error) {
 	startedAt := time.Now()
-	err := mw.next.ApplyPayment(ctx, p)
+	out, err := mw.next.ApplyPayment(ctx, p)
 	mw.record(ctx, startedAt, "ApplyPayment", err)
-	return err
+	return out, err
 }
 
 func (mw *instrumentingMiddleware) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {

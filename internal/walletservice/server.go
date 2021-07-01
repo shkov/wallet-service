@@ -138,10 +138,10 @@ func makeGetPaymentsEndpoint(svc Service) endpoint.Endpoint {
 func makeApplyPaymentEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(applyPaymentRequest)
-		err := svc.ApplyPayment(ctx, req.input)
+		resp, err := svc.ApplyPayment(ctx, req.paymentRequest)
 		if err != nil {
 			return nil, err
 		}
-		return applyPaymentResponse{}, nil
+		return applyPaymentResponse{payment: resp}, nil
 	}
 }

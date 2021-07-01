@@ -2,6 +2,7 @@ package walletservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-kit/kit/log"
 
@@ -10,24 +11,27 @@ import (
 
 // Service provides wallet-service functionality.
 type Service interface {
-	ApplyPayment(ctx context.Context, p *account.Payment) error
+	ApplyPayment(ctx context.Context, p *account.PaymentRequest) (*account.Payment, error)
 	GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error)
 	GetAccount(ctx context.Context, id int64) (*account.Account, error)
 }
 
 type serviceImpl struct {
 	logger log.Logger
+
+	now func() time.Time
 }
 
 func newService(logger log.Logger) Service {
 	return &serviceImpl{
 		logger: logger,
+		now:    func() time.Time { return time.Now() },
 	}
 }
 
-// ApplyPayment applies the given payment to the accounts.
-func (s *serviceImpl) ApplyPayment(ctx context.Context, p *account.Payment) error {
-	return errInternal("ApplyPayment wasn't implemented")
+// ApplyPayment applies the given payment request to the accounts.
+func (s *serviceImpl) ApplyPayment(ctx context.Context, p *account.PaymentRequest) (*account.Payment, error) {
+	return nil, errInternal("ApplyPayment wasn't implemented")
 }
 
 // GetPayments returns all payments by the account id.

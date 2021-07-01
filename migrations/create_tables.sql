@@ -1,4 +1,9 @@
-CREATE TABLE IF NOT EXISTS wallet (
+CREATE TABLE IF NOT EXISTS accounts (
+  id INT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS payments (
   id INT NOT NULL,
   PRIMARY KEY (id)
 );

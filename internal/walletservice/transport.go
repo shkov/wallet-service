@@ -14,17 +14,18 @@ import (
 )
 
 type applyPaymentRequest struct {
-	input *account.Payment
+	paymentRequest *account.PaymentRequest
 }
 
 type applyPaymentResponse struct {
+	payment *account.Payment
 }
 
 func encodeApplyPaymentRequest(ctx context.Context, r *http.Request, request interface{}) error {
 	req := request.(applyPaymentRequest)
 	r.URL.Path = "/api/v1/payments"
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(req.input); err != nil {
+	if err := json.NewEncoder(&buf).Encode(req.paymentRequest); err != nil {
 		return err
 	}
 	r.Body = ioutil.NopCloser(&buf)
@@ -32,23 +33,31 @@ func encodeApplyPaymentRequest(ctx context.Context, r *http.Request, request int
 }
 
 func decodeApplyPaymentRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	input := &account.Payment{}
-	if err := json.NewDecoder(r.Body).Decode(input); err != nil {
+	paymentRequest := &account.PaymentRequest{}
+	if err := json.NewDecoder(r.Body).Decode(paymentRequest); err != nil {
 		return nil, errBadRequest("failed to decode json request: %v", err)
 	}
-	return applyPaymentRequest{input: input}, nil
+	return applyPaymentRequest{paymentRequest: paymentRequest}, nil
 }
 
 func encodeApplyPaymentResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	w.WriteHeader(http.StatusNoContent)
+	resp := response.(applyPaymentResponse)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(resp.payment); err != nil {
+		return errInternal("failed to encode json response: %v", err)
+	}
 	return nil
 }
 
 func decodeApplyPaymentResponse(ctx context.Context, r *http.Response) (interface{}, error) {
-	if r.StatusCode < 200 || r.StatusCode > 299 {
+	if r.StatusCode != http.StatusOK {
 		return nil, decodeError(r)
 	}
-	return applyPaymentResponse{}, nil
+	resp := applyPaymentResponse{}
+	if err := json.NewDecoder(r.Body).Decode(resp.payment); err != nil {
+		return nil, fmt.Errorf("failed to decode json response: %w", err)
+	}
+	return resp, nil
 }
 
 type getAccountRequest struct {
