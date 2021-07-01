@@ -60,14 +60,14 @@ func (s *serviceImpl) ApplyPayment(ctx context.Context, r *account.PaymentReques
 		return nil, errBadRequest("failed to apply payment to the receiver: %v", err)
 	}
 
-	err = s.storage.InsertPayment(ctx, payment)
-	if err != nil {
-		return nil, errInternal("failed to insert payment: %v", err)
-	}
-
 	err = s.storage.ReplaceAccounts(ctx, []*account.Account{fromAccount, toAccount})
 	if err != nil {
 		return nil, errInternal("failed to replace accounts: %v", err)
+	}
+
+	err = s.storage.InsertPayment(ctx, payment)
+	if err != nil {
+		return nil, errInternal("failed to insert payment: %v", err)
 	}
 
 	// TODO: close transaction.

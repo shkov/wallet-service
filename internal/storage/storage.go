@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/go-pg/pg/v10"
 
 	"github.com/shkov/wallet-service/internal/account"
 )
@@ -16,64 +16,93 @@ type Storage interface {
 	GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error)
 	InsertPayment(ctx context.Context, p *account.Payment) error
 	ReplaceAccounts(ctx context.Context, aa []*account.Account) error
-	Close(ctx context.Context) error
+	Close() error
 }
 
 type Config struct {
-	Host           string
-	Port           uint16
-	Database       string
-	User           string
-	Password       string
-	ConnectTimeout time.Duration
+	Host         string
+	Port         string
+	Database     string
+	User         string
+	Password     string
+	DialTimeout  time.Duration
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
 type storageImpl struct {
-	conn *pgx.Conn
+	db *pg.DB
 }
 
-func New(cfg Config) (Storage, error) {
-	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?connect_timeout=%d",
-		cfg.User,
-		cfg.Password,
-		cfg.Host,
-		cfg.Port,
-		cfg.Database,
-		int(cfg.ConnectTimeout.Seconds()),
-	)
-
-	conn, err := pgx.Connect(context.Background(), connString)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create connection: %w", err)
+func New(cfg Config) Storage {
+	return &storageImpl{
+		db: pg.Connect(&pg.Options{
+			Addr:         cfg.Host + ":" + cfg.Port,
+			User:         cfg.User,
+			Password:     cfg.Password,
+			Database:     cfg.Database,
+			DialTimeout:  cfg.DialTimeout,
+			ReadTimeout:  cfg.ReadTimeout,
+			WriteTimeout: cfg.WriteTimeout,
+		}),
 	}
-
-	s := &storageImpl{
-		conn: conn,
-	}
-
-	return s, nil
 }
 
-func (s *storageImpl) Close(ctx context.Context) error {
-	return s.conn.Close(ctx)
+func (s *storageImpl) Close() error {
+	return s.db.Close()
 }
 
 func (s *storageImpl) GetAccount(ctx context.Context, id int64) (*account.Account, error) {
-	return nil, nil
+	a := &account.Account{}
+	err := s.db.WithContext(ctx).Model(a).Where(`id = ?`, id).Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, account.ErrNotFound
+		}
+		return nil, err
+	}
+	return a, nil
 }
 
 func (s *storageImpl) GetAccounts(ctx context.Context, ids []int64) ([]*account.Account, error) {
-	return nil, nil
+	var accounts []*account.Account
+	err := s.db.WithContext(ctx).Model(&accounts).WhereIn(`id in (?)`, ids).Select()
+	if err != nil {
+		return nil, err
+	}
+	return accounts, nil
 }
 
 func (s *storageImpl) GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error) {
-	return nil, nil
+	payments := make([]*account.Payment, 0)
+	err := s.db.WithContext(ctx).
+		Model(&payments).
+		WhereOr("from_account_id = ?", accountID).
+		WhereOr("to_account_id = ?", accountID).
+		Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return payments, nil
 }
 
 func (s *storageImpl) InsertPayment(ctx context.Context, p *account.Payment) error {
+	_, err := s.db.WithContext(ctx).Model(p).Insert()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *storageImpl) ReplaceAccounts(ctx context.Context, aa []*account.Account) error {
+	_, err := s.db.WithContext(ctx).
+		Model(&aa).
+		OnConflict(`(id) do update`).
+		Set(`balance = excluded.balance`).
+		Insert()
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -66,9 +66,9 @@ func (mw *instrumentingMiddleware) ReplaceAccounts(ctx context.Context, aa []*ac
 	return err
 }
 
-func (mw *instrumentingMiddleware) Close(ctx context.Context) error {
+func (mw *instrumentingMiddleware) Close() error {
 	createdAt := time.Now()
-	err := mw.next.Close(ctx)
+	err := mw.next.Close()
 	mw.record(createdAt, "Close", err)
 	return err
 }

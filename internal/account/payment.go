@@ -7,11 +7,12 @@ import (
 )
 
 type Payment struct {
-	ID        int64
-	From      int64
-	To        int64
-	Amount    string
-	CreatedAt time.Time
+	tableName struct{}  `pq:"payments"`
+	ID        int64     `pq:"id"`
+	From      int64     `pg:"from_account_id"`
+	To        int64     `pg:"to_account_id"`
+	Amount    string    `pq:"amount"`
+	CreatedAt time.Time `pq:"create_at"`
 }
 
 type PaymentRequest struct {

@@ -25,12 +25,12 @@ type configuration struct {
 	WriteTimeout    time.Duration `envconfig:"WRITE_TIMEOUT" default:"1s"`
 	ShutdownTimeout time.Duration `envconfig:"SHUTDOWN_TIMEOUT" default:"1s"`
 
-	PostgresHost           string        `envconfig:"POSTGRES_HOST" required:"true"`
-	PostgresPort           uint16        `envconfig:"POSTGRES_PORT" required:"true"`
-	PostgresDatabase       string        `envconfig:"POSTGRES_DATABASE" required:"true"`
-	PostgresUser           string        `envconfig:"POSTGRES_USER" required:"true"`
-	PostgresPassword       string        `envconfig:"POSTGRES_PASSWORD" required:"true"`
-	PostgresConnectTimeout time.Duration `envconfig:"POSTGRES_CONNECT_TIMEOUT" default:"1s"`
+	PostgresHost        string        `envconfig:"POSTGRES_HOST" required:"true"`
+	PostgresPort        string        `envconfig:"POSTGRES_PORT" required:"true"`
+	PostgresDatabase    string        `envconfig:"POSTGRES_DATABASE" required:"true"`
+	PostgresUser        string        `envconfig:"POSTGRES_USER" required:"true"`
+	PostgresPassword    string        `envconfig:"POSTGRES_PASSWORD" required:"true"`
+	PostgresDialTimeout time.Duration `envconfig:"POSTGRES_DIAL_TIMEOUT" default:"1s"`
 }
 
 func main() {
@@ -56,21 +56,21 @@ func run(ctx context.Context, logger log.Logger) error {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	walletStorage, err := storage.New(storage.Config{
-		Host:           cfg.PostgresHost,
-		Port:           cfg.PostgresPort,
-		Database:       cfg.PostgresDatabase,
-		User:           cfg.PostgresUser,
-		Password:       cfg.PostgresPassword,
-		ConnectTimeout: cfg.PostgresConnectTimeout,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
-	}
+	walletStorage := storage.NewInstrumentingMiddleware(
+		storage.New(storage.Config{
+			Host:         cfg.PostgresHost,
+			Port:         cfg.PostgresPort,
+			Database:     cfg.PostgresDatabase,
+			User:         cfg.PostgresUser,
+			Password:     cfg.PostgresPassword,
+			DialTimeout:  cfg.PostgresDialTimeout,
+			ReadTimeout:  cfg.ReadTimeout,
+			WriteTimeout: cfg.WriteTimeout,
+		}),
+		metricPrefix,
+	)
 
-	walletStorage = storage.NewInstrumentingMiddleware(walletStorage, metricPrefix)
-
-	defer walletStorage.Close(ctx)
+	defer walletStorage.Close()
 
 	srv, err := walletservice.NewServer(walletservice.ServerConfig{
 		Logger:          logger,

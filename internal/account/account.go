@@ -7,9 +7,10 @@ import (
 )
 
 type Account struct {
-	ID        int64
-	Balance   string
-	CreatedAt time.Time
+	tableName struct{}  `pq:"accounts"`
+	ID        int64     `pq:"id"`
+	Balance   string    `pq:"balance"`
+	CreatedAt time.Time `pq:"created_at"`
 }
 
 func Create(id int64, createdAt time.Time) *Account {
