@@ -16,7 +16,7 @@ test:
 .PHONY: run
 run:
 	@docker-compose -f deployments/docker-compose.yml up -d --build
-	# OK
+	@docker logs walletservice -f
 
 .PHONY: clean
 clean:

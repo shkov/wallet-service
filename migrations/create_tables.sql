@@ -1,9 +1,13 @@
 CREATE TABLE IF NOT EXISTS accounts (
-  id INT NOT NULL,
-  PRIMARY KEY (id)
+  id BIGSERIAL PRIMARY KEY,
+  balance VARCHAR(32),
+  created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS payments (
-  id INT NOT NULL,
-  PRIMARY KEY (id)
+  id BIGSERIAL PRIMARY KEY,
+  from BIGINT REFERENCES accounts (id),
+  to BIGINT REFERENCES accounts (id),
+  amount VARCHAR(32),
+  created_at TIMESTAMP NOT NULL
 );

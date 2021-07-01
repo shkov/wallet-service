@@ -67,7 +67,10 @@ func run(ctx context.Context, logger log.Logger) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
+
 	walletStorage = storage.NewInstrumentingMiddleware(walletStorage, metricPrefix)
+
+	defer walletStorage.Close(ctx)
 
 	srv, err := walletservice.NewServer(walletservice.ServerConfig{
 		Logger:          logger,

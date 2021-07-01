@@ -12,9 +12,17 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/shkov/wallet-service/internal/account"
 )
 
+// Storage represents the wallet-service storage.
 type Storage interface {
+	GetAccount(ctx context.Context, id int64) (*account.Account, error)
+	GetAccounts(ctx context.Context, ids []int64) ([]*account.Account, error)
+	GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error)
+	InsertPayment(ctx context.Context, p *account.Payment) error
+	ReplaceAccounts(ctx context.Context, aa []*account.Account) error
 }
 
 // ServerConfig is a server configuration.
@@ -37,7 +45,7 @@ type Server struct {
 // NewServer creates a new server.
 func NewServer(cfg ServerConfig) (*Server, error) {
 	var svc Service
-	svc = newService(cfg.Logger)
+	svc = newService(cfg.Logger, cfg.Storage)
 	svc = NewLoggingMiddleware(svc, cfg.Logger)
 	svc = NewInstrumentingMiddleware(svc, cfg.MetricPrefix)
 
