@@ -40,7 +40,7 @@ func (ts *transactionalStorage) ExecTx(ctx context.Context, fn func(context.Cont
 
 	err = fn(ctx, ts.storageImpl)
 	if err != nil {
-		return fmt.Errorf("failed to exec fn: %w", err)
+		return err
 	}
 
 	err = tx.Commit()

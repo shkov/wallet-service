@@ -4,6 +4,7 @@
 .idea_modules
 *.swp
 *.swo
+.DS_Store
 
 # Binaries for programs and plugins
 *.exe
