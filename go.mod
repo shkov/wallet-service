@@ -9,5 +9,6 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/shopspring/decimal v0.0.0-20200227202807-02e2044944cc
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )
