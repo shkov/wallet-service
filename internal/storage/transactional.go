@@ -10,19 +10,19 @@ type TransactionalStorage interface {
 	ExecTx(ctx context.Context, fn func(context.Context, Storage) error) error
 }
 
-type transactionalStorageImpl struct {
-	Storage
+type transactionalStorage struct {
+	*storageImpl
 }
 
-func NewTransactional(storage Storage) TransactionalStorage {
-	return &transactionalStorageImpl{
-		Storage: storage,
+func NewTransactional(cfg Config) TransactionalStorage {
+	return &transactionalStorage{
+		storageImpl: newStorageImpl(cfg),
 	}
 }
 
 // Exec wraps the execution of fn into a postgres transaction.
-func (ts *transactionalStorageImpl) ExecTx(ctx context.Context, fn func(context.Context, Storage) error) (err error) {
-	tx, err := ts.beginTx()
+func (ts *transactionalStorage) ExecTx(ctx context.Context, fn func(context.Context, Storage) error) (err error) {
+	tx, err := ts.storageImpl.db.Begin()
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (ts *transactionalStorageImpl) ExecTx(ctx context.Context, fn func(context.
 		}
 	}()
 
-	err = fn(ctx, ts.Storage)
+	err = fn(ctx, ts.storageImpl)
 	if err != nil {
 		return fmt.Errorf("failed to exec fn: %w", err)
 	}

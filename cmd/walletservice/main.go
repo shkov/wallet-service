@@ -57,7 +57,7 @@ func run(ctx context.Context, logger log.Logger) error {
 	}
 
 	walletStorage := storage.NewInstrumentingMiddleware(
-		storage.New(storage.Config{
+		storage.NewTransactional(storage.Config{
 			Host:         cfg.PostgresHost,
 			Port:         cfg.PostgresPort,
 			Database:     cfg.PostgresDatabase,
@@ -72,11 +72,9 @@ func run(ctx context.Context, logger log.Logger) error {
 
 	defer walletStorage.Close()
 
-	transactionalStorage := storage.NewTransactional(walletStorage)
-
 	srv, err := walletservice.NewServer(walletservice.ServerConfig{
 		Logger:          logger,
-		Storage:         transactionalStorage,
+		Storage:         walletStorage,
 		Port:            cfg.Port,
 		ReadTimeout:     cfg.ReadTimeout,
 		WriteTimeout:    cfg.WriteTimeout,

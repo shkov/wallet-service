@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/go-pg/pg/v10"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/shkov/wallet-service/internal/account"
@@ -15,11 +14,11 @@ import (
 
 // instrumentingMiddleware wraps Storage and records metrics.
 type instrumentingMiddleware struct {
-	next      Storage
+	next      TransactionalStorage
 	histogram metrics.Histogram
 }
 
-func NewInstrumentingMiddleware(next Storage, prefix string) Storage {
+func NewInstrumentingMiddleware(next TransactionalStorage, prefix string) TransactionalStorage {
 	return &instrumentingMiddleware{
 		next: next,
 		histogram: kitprometheus.NewHistogramFrom(
@@ -74,11 +73,14 @@ func (mw *instrumentingMiddleware) Close() error {
 	return err
 }
 
-func (mw *instrumentingMiddleware) beginTx() (*pg.Tx, error) {
+func (mw *instrumentingMiddleware) ExecTx(ctx context.Context, fn func(context.Context, Storage) error) error {
 	createdAt := time.Now()
-	out, err := mw.next.beginTx()
-	mw.record(createdAt, "beginTx", err)
-	return out, err
+	fnWithMetrics := func(ctx context.Context, s Storage) error {
+		return fn(ctx, mw)
+	}
+	err := mw.next.ExecTx(ctx, fnWithMetrics)
+	mw.record(createdAt, "ExecTx", err)
+	return err
 }
 
 func (mw *instrumentingMiddleware) record(beginTime time.Time, method string, err error) {

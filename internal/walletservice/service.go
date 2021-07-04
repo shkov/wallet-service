@@ -85,7 +85,7 @@ func (s *serviceImpl) ApplyPayment(ctx context.Context, r *account.PaymentReques
 func (s *serviceImpl) getAccountsByPayment(ctx context.Context, p *account.Payment) (*account.Account, *account.Account, error) {
 	accounts, err := s.storage.GetAccounts(ctx, []int64{p.From, p.To})
 	if err != nil {
-		return nil, nil, errInternal("failed to get accounts: %v", err)
+		return nil, nil, err
 	}
 
 	var fromAccount, toAccount *account.Account

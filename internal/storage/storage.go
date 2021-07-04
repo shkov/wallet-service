@@ -18,8 +18,6 @@ type Storage interface {
 	InsertPayment(ctx context.Context, p *account.Payment) error
 	ReplaceAccounts(ctx context.Context, aa []*account.Account) error
 	Close() error
-
-	beginTx() (*pg.Tx, error)
 }
 
 // Config is a Storage configuration.
@@ -38,8 +36,8 @@ type storageImpl struct {
 	db *pg.DB
 }
 
-// New creates a new Storage.
-func New(cfg Config) Storage {
+// new creates a new Storage.
+func newStorageImpl(cfg Config) *storageImpl {
 	return &storageImpl{
 		db: pg.Connect(&pg.Options{
 			Addr:         cfg.Host + ":" + cfg.Port,
@@ -51,10 +49,6 @@ func New(cfg Config) Storage {
 			WriteTimeout: cfg.WriteTimeout,
 		}),
 	}
-}
-
-func (s *storageImpl) beginTx() (*pg.Tx, error) {
-	return s.db.Begin()
 }
 
 func (s *storageImpl) Close() error {
