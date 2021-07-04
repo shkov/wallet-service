@@ -53,11 +53,11 @@ func decodeApplyPaymentResponse(ctx context.Context, r *http.Response) (interfac
 	if r.StatusCode != http.StatusOK {
 		return nil, decodeError(r)
 	}
-	resp := applyPaymentResponse{}
-	if err := json.NewDecoder(r.Body).Decode(resp.payment); err != nil {
+	payment := &account.Payment{}
+	if err := json.NewDecoder(r.Body).Decode(payment); err != nil {
 		return nil, fmt.Errorf("failed to decode json response: %w", err)
 	}
-	return resp, nil
+	return applyPaymentResponse{payment: payment}, nil
 }
 
 type getAccountRequest struct {
