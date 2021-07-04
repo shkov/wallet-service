@@ -45,5 +45,8 @@ func ValidatePaymentRequest(r *PaymentRequest) error {
 	if r.To <= 0 {
 		return ErrAccountToMustBePositive
 	}
+	if r.From == r.To {
+		return ErrFromAndToMustBeDifferent
+	}
 	return nil
 }

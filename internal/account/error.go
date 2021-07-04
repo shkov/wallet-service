@@ -13,4 +13,5 @@ var (
 	ErrAccountFromMustBePositive = errors.New("account from must be positive")
 	ErrAccountToMustBePositive   = errors.New("account to must be positive")
 	ErrMustBePositive            = errors.New("must be positive")
+	ErrFromAndToMustBeDifferent  = errors.New("from and to must be different")
 )
