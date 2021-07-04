@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-kit/kit/metrics"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/go-pg/pg/v10"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/shkov/wallet-service/internal/account"
@@ -71,6 +72,13 @@ func (mw *instrumentingMiddleware) Close() error {
 	err := mw.next.Close()
 	mw.record(createdAt, "Close", err)
 	return err
+}
+
+func (mw *instrumentingMiddleware) beginTx() (*pg.Tx, error) {
+	createdAt := time.Now()
+	out, err := mw.next.beginTx()
+	mw.record(createdAt, "beginTx", err)
+	return out, err
 }
 
 func (mw *instrumentingMiddleware) record(beginTime time.Time, method string, err error) {

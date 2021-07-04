@@ -72,9 +72,11 @@ func run(ctx context.Context, logger log.Logger) error {
 
 	defer walletStorage.Close()
 
+	transactionalStorage := storage.NewTransactional(walletStorage)
+
 	srv, err := walletservice.NewServer(walletservice.ServerConfig{
 		Logger:          logger,
-		Storage:         walletStorage,
+		Storage:         transactionalStorage,
 		Port:            cfg.Port,
 		ReadTimeout:     cfg.ReadTimeout,
 		WriteTimeout:    cfg.WriteTimeout,

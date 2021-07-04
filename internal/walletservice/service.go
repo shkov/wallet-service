@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/log"
 
 	"github.com/shkov/wallet-service/internal/account"
+	"github.com/shkov/wallet-service/internal/storage"
 )
 
 // Service provides wallet-service functionality.
@@ -19,12 +20,12 @@ type Service interface {
 
 type serviceImpl struct {
 	logger  log.Logger
-	storage Storage
+	storage storage.TransactionalStorage
 
 	now func() time.Time
 }
 
-func newService(logger log.Logger, storage Storage) Service {
+func newService(logger log.Logger, storage storage.TransactionalStorage) Service {
 	return &serviceImpl{
 		logger:  logger,
 		storage: storage,
@@ -41,36 +42,41 @@ func (s *serviceImpl) ApplyPayment(ctx context.Context, r *account.PaymentReques
 		return nil, errBadRequest("payment is invalid: %v", err)
 	}
 
-	// TODO: add transaction.
-
 	payment := r.ToPayment(s.now())
 
-	fromAccount, toAccount, err := s.getAccountsByPayment(ctx, payment)
-	if err != nil {
-		return nil, errInternal("failed to get accounts: %v", err)
+	txFn := func(ctx context.Context, storage storage.Storage) error {
+		fromAccount, toAccount, err := s.getAccountsByPayment(ctx, payment)
+		if err != nil {
+			return errInternal("failed to get accounts: %v", err)
+		}
+
+		err = fromAccount.ApplyPayment(payment)
+		if err != nil {
+			return errBadRequest("failed to apply payment to the sender: %v", err)
+		}
+
+		err = toAccount.ApplyPayment(payment)
+		if err != nil {
+			return errBadRequest("failed to apply payment to the receiver: %v", err)
+		}
+
+		err = s.storage.ReplaceAccounts(ctx, []*account.Account{fromAccount, toAccount})
+		if err != nil {
+			return errInternal("failed to replace accounts: %v", err)
+		}
+
+		err = s.storage.InsertPayment(ctx, payment)
+		if err != nil {
+			return errInternal("failed to insert payment: %v", err)
+		}
+
+		return nil
 	}
 
-	err = fromAccount.ApplyPayment(payment)
+	err = s.storage.ExecTx(ctx, txFn)
 	if err != nil {
-		return nil, errBadRequest("failed to apply payment to the sender: %v", err)
+		return nil, err
 	}
-
-	err = toAccount.ApplyPayment(payment)
-	if err != nil {
-		return nil, errBadRequest("failed to apply payment to the receiver: %v", err)
-	}
-
-	err = s.storage.ReplaceAccounts(ctx, []*account.Account{fromAccount, toAccount})
-	if err != nil {
-		return nil, errInternal("failed to replace accounts: %v", err)
-	}
-
-	err = s.storage.InsertPayment(ctx, payment)
-	if err != nil {
-		return nil, errInternal("failed to insert payment: %v", err)
-	}
-
-	// TODO: close transaction.
 
 	return payment, nil
 }

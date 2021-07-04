@@ -13,22 +13,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/shkov/wallet-service/internal/account"
+	"github.com/shkov/wallet-service/internal/storage"
 )
-
-// Storage represents the wallet-service storage.
-type Storage interface {
-	GetAccount(ctx context.Context, id int64) (*account.Account, error)
-	GetAccounts(ctx context.Context, ids []int64) ([]*account.Account, error)
-	GetPayments(ctx context.Context, accountID int64) ([]*account.Payment, error)
-	InsertPayment(ctx context.Context, p *account.Payment) error
-	ReplaceAccounts(ctx context.Context, aa []*account.Account) error
-}
 
 // ServerConfig is a server configuration.
 type ServerConfig struct {
 	Logger          log.Logger
-	Storage         Storage
+	Storage         storage.TransactionalStorage
 	Port            string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
