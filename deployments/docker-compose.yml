@@ -21,7 +21,7 @@ services:
     restart: always
     environment:
       - PORT=80
-      - POSTGRES_HOST=127.0.0.1
+      - POSTGRES_HOST=walletservice-postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DATABASE=wallet
       - POSTGRES_USER=walletservice_user
